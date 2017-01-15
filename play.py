@@ -147,6 +147,10 @@ class Computer(Player):
 
 
 class Human(Player):
+    def __init__(self, maxn=1e4):
+        self._pos = sunfish.Position(sunfish.initial, 0, (True,True), (True,True), 0, 0)
+        self._maxn = maxn
+
     def move(self, gn_current):
         bb = gn_current.board()
 
@@ -193,7 +197,8 @@ class Sunfish(Player):
         self._pos = self._pos.move(move)
 
         t0 = time.time()
-        move, score = sunfish.search(self._pos, maxn=self._maxn)
+        searcher = sunfish.Searcher()
+        move, score = searcher.search(self._pos, secs=2)
         print time.time() - t0, move, score
         self._pos = self._pos.move(move)
 
@@ -216,6 +221,7 @@ def game(func):
 
     player_a = Computer(func, maxd=maxd)
     player_b = Sunfish(maxn=maxn)
+    #player_b = Human(maxn=maxn)
 
     times = {'A': 0.0, 'B': 0.0}
     
