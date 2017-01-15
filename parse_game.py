@@ -7,6 +7,7 @@ import itertools
 import random
 import h5py
 
+
 def read_games(fn):
     f = open(fn)
 
@@ -36,7 +37,7 @@ def bb2array(b, flip=False):
                 row = 7-row
                 color = 1 - color
 
-            piece = color*7 + piece
+            piece += color * 7
 
             x[row * 8 + col] = piece
 
@@ -91,11 +92,11 @@ def parse_game(g):
         print b
         print 'checkmate:', g.end().board().is_checkmate()
     
-    # print x
-    # print x_parent
-    # print x_random
+    print x
+    print x_parent
+    print x_random
 
-    return (x, x_parent, x_random, moves_left, y)
+    return x, x_parent, x_random, moves_left, y
 
 
 def read_all_games(fn_in, fn_out):    
@@ -127,20 +128,24 @@ def read_all_games(fn_in, fn_out):
     [d.resize(size=line, axis=0) for d in (X, Xr, Xp, Y, M)]
     g.close()
 
+
 def read_all_games_2(a):
     return read_all_games(*a)
 
+
 def parse_dir():
     files = []
-    d = '/mnt/games'
+    d = './'
     for fn_in in os.listdir(d):
         if not fn_in.endswith('.pgn'):
             continue
         fn_in = os.path.join(d, fn_in)
+        print fn_in
         fn_out = fn_in.replace('.pgn', '.hdf5')
         if not os.path.exists(fn_out):
             files.append((fn_in, fn_out))
-
+    for f in files:
+        print files
     pool = multiprocessing.Pool()
     pool.map(read_all_games_2, files)
 

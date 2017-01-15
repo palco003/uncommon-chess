@@ -16,10 +16,12 @@ MINIBATCH_SIZE = 2000
 
 rng = numpy.random
 
+
 def floatX(x):
     return numpy.asarray(x, dtype=theano.config.floatX)
 
-def load_data(dir='/mnt/games'):
+
+def load_data(dir='./'):
     for fn in os.listdir(dir):
         if not fn.endswith('.hdf5'):
             continue
@@ -74,7 +76,6 @@ def get_parameters(n_in=None, n_hidden_units=2048, n_hidden_layers=None, Ws=None
                 high=numpy.sqrt(6. / (n_in + n_out)),
                 size=(n_in, n_out)), dtype=theano.config.floatX)
 
-        
         for l in xrange(n_hidden_layers):
             if l == 0:
                 n_in_2 = n_in
@@ -195,6 +196,7 @@ def get_function(Ws_s, bs_s, dropout=False, update=False):
 
     return f
 
+
 def train():
     Xc_train, Xc_test, Xr_train, Xr_test, Xp_train, Xp_test = get_data(['x', 'xr', 'xp'])
     for board in [Xc_train[0], Xp_train[0]]:
@@ -237,6 +239,7 @@ def train():
 
                 print 'dumping pickled model'
                 f = open('model.pickle', 'w')
+
                 def values(zs):
                     return [z.get_value(borrow=True) for z in zs]
                 pickle.dump((values(Ws_s), values(bs_s)), f)

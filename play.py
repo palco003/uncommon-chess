@@ -11,9 +11,11 @@ import re
 import string
 import numpy
 import sunfish
-import pickle
 import random
 import traceback
+
+move_count = 1
+move_string = ""
 
 
 def get_model_from_pickle(fn):
@@ -211,12 +213,14 @@ class Sunfish(Player):
 
         return gn_new
 
+
 def game(func):
     gn_current = chess.pgn.Game()
 
     maxd = random.randint(1, 2) # max depth for deep pink
     maxn = 10 ** (2.0 + random.random() * 1.0) # max nodes for sunfish
-
+    print '***************************************************'
+    print 'New Game'
     print 'maxd %f maxn %f' % (maxd, maxn)
 
     player_a = Computer(func, maxd=maxd)
@@ -224,7 +228,14 @@ def game(func):
     #player_b = Human(maxn=maxn)
 
     times = {'A': 0.0, 'B': 0.0}
-    
+
+    # results_file = open('results.pgn', 'a+')
+    #
+
+    # for h in gn_current.headers:
+    #     print "[" + h + "]\n"
+    headers = gn_current.headers
+
     while True:
         for side, player in [('A', player_a), ('B', player_b)]:
             t0 = time.time()
@@ -238,26 +249,93 @@ def game(func):
 
             times[side] += time.time() - t0
             print '=========== Player %s: %s' % (side, gn_current.move)
+#########################################################################################
+            current_move = gn_current.san()
+            moves = build_move_string(current_move, side)
+            global move_count
+
             s = str(gn_current.board())
             print s
             if gn_current.board().is_checkmate():
-                return side, times
+                move_count = 1
+                result = gn_current.board().result()
+                headers["Result"] = result
+                # results_file.write(result + '\n\n')
+                # append_result(results_file, result)
+                return side, times, result, moves, headers
             elif gn_current.board().is_stalemate():
-                return '-', times
+                move_count = 1
+                result = gn_current.board().result()
+                headers["Result"] = result
+                # results_file.write(result + '\n\n')
+                # append_result(results_file, result)
+                return '-', times, result, moves, headers
             elif gn_current.board().can_claim_fifty_moves():
-                return '-', times
-            elif s.find('K') == -1 or s.find('k') == -1:
-                # Both AI's suck at checkmating, so also detect capturing the king
-                return side, times
-            
+                move_count = 1
+                result = gn_current.board().result()
+                headers["Result"] = result
+                # headers = gn_current.headers
+                # results_file.write(result + '\n\n')
+                # append_result(results_file, result)
+                return '-', times, result, moves, headers
+            # Both AI's suck at checkmating, so also detect capturing the king
+            elif s.find('K') == -1:
+                move_count = 1
+                result = '0-1'
+                headers["Result"] = result
+                print "This is the result !!!!!!!!!!!" + headers["Result"]
+                # headers = gn_current.headers
+                # results_file.write('0-1 \n\n')
+                # append_result(results_file, '0-1')
+                return side, times, result, moves, headers
+            elif s.find('k') == -1:
+                move_count = 1
+                result = '1-0'
+                headers["Result"] = result
+                print "This is the result !!!!!!!!!!!" + headers["Result"]
+                # headers = gn_current.headers
+                # results_file.write('1-0 \n\n')
+                # append_result(results_file, '1-0')
+                return side, times, result, moves, headers
+            if side == 'A':
+                move_count += 1
+
+
+# def append_result(results_file, result):
+#     for line in results_file:
+#         if 'Result' in line:
+#             print "True!!!!!"
+#             results_file.write(line + result)
+#         else:
+#             print "False!!!!!"
+
+
+def build_move_string(move, side):
+    if side == 'A':
+        global move_string
+        move_string +=  str(move_count) + '. '
+        # results_file.write(str(move_count) + '. ')
+    move_string += move + ' '
+    return move_string
+    # results_file.write(move + ' ')
+    # results_file.write(move_string)
+
+
 def play():
     func = get_model_from_pickle('model.pickle')
+    print game
     while True:
-        side, times = game(func)
+        side, times, result, moves, headers = game(func)
         f = open('stats.txt', 'a')
         f.write('%s %f %f\n' % (side, times['A'], times['B']))
         f.close()
 
+        results_file = open('results.pgn', 'a+')
+        for h in headers:
+            results_file.write("[" + h + " \"" + headers[h] + "\"]\n")
+        results_file.write('\n')
+        results_file.write(moves + '\n\n')
+        results_file.close()
         
 if __name__ == '__main__':
     play()
